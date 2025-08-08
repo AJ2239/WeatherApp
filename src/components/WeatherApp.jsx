@@ -1,109 +1,92 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import icon from "./weathericon.png";
+import React, { useState } from "react";
+import { useWeatherQuery } from "./fetchweatherquery";
 
 export default function WeatherApp() {
-  const [city, setCity] = useState(localStorage.getItem("wc_city") || "");
-  const [data, setData] = useState(
-    JSON.parse(localStorage.getItem("wc_data")) || null
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const apiKey = "79557696e6b6410aa5372925250508";
+  const [city, setCity] = useState("");
 
-  const getWeather = async () => {
-    if (!city) return;
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await axios.get(
-        `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=12`
-      );
-      setData(res.data);
-      localStorage.setItem("wc_city", city);
-      localStorage.setItem("wc_data", JSON.stringify(res.data));
-    } catch (err) {
-      setError("City not found or API error!");
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (city && data === null) getWeather();
-    // eslint-disable-next-line
-  }, []);
+  const { data, isLoading, isError, refetch } = useWeatherQuery(city);
+  
+  
 
   return (
-    <div className="flex flex-col items-center">
-      <h1 className="text-3xl md:text-4xl font-bold mb-6 text-white flex">
-        <img src={icon} alt="" className="size-12" />
-        Weather Forecast
-      </h1>
+    <div>
+      <h1 className="text-white text-6xl font-extrabold text-center pt-4">
+         🌦️Weather App
+        </h1>
+         <div  className=" flex justify-center gap-3 mt-8 ">
+                
+                <input value={city} onChange={(e) => setCity(e.target.value)} type="text" placeholder="Search for location" className=" w-[300px] h-[45px] rounded border-gray-900 pl-2  ">
+                </input>
+                <button onClick={refetch} className="text-white bg-blue-600 h-[45px]  rounded w-[70px] hover:bg-blue-700 ">Search</button>
+              </div>
 
-      <div className="flex gap-2">
-        <input
-          className="px-4 py-2 border rounded-lg focus:outline-none dark:bg-gray-800"
-          type="text"
-          placeholder="Enter city..."
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
-        <button
-          onClick={getWeather}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Search
-        </button>
-      </div>
+               {isLoading && <p className="w-16 h-16 border-4 border-white
+                        border-t-transparent rounded-full animate-spin ml-[650px] mt-6"></p>}
+               {isError && <p className="mt-6 text-red-700 text-center">Couldn't find Location.Try Again!</p>}
 
-      {loading && <p className="mt-6 animate-pulse">Loading...</p>}
-      {error && <p className="mt-6 text-red-500">{error}</p>}
-
-      {data && !loading && (
-        <div className="mt-10 max-w-6xl w-full px-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 mb-8 flex items-center gap-6">
-            <img src={data.current.condition.icon} alt="icon" className="w-20 h-20" />
-            <div>
-              <h2 className="text-xl font-bold text-blue-700">
+      {/* Data */}
+        {data &&  (
+            <div className="flex flex-col gap-5">
+             <div className="text-center mt-20 bg-white w-[1000px] h-[300px] hover:scale-105 ml-40 rounded-xl flex gap-12 ">
+              <div className="pt-12 pl-[100px] ">
+              <h2 className="text-blue-700 text-5xl font-bold ">
                 {data.location.name}, {data.location.country}
               </h2>
-              <p className="text-lg">
-                {data.current.temp_c}°C — {data.current.condition.text}
-              </p>
-            </div>
-          </div>
+              <p className="pt-6 text-xl font-bold">
+             {data.current.temp_c}°C (
+            {data.current.condition.text})
+          </p>
+          
+          <p className="text-xl pt-2">💧 Humidity: {data.current.humidity}%</p>
+            <p className="text-xl">🌪 Wind: {data.current.wind_kph} km/h</p>
+            <p className="text-xl text-gray-800">
+                           {new Date(data.location.localtime).toLocaleDateString("en-US", {
+                           weekday: "long",
+                            year: "numeric",
+                             month: "long",
+                             day: "numeric",
+                            })}            
+                           </p>
+             </div>
+             <img src={data.current.condition.icon} alt="icon" className="  h-[250px] mt-6" />
+             </div>
+              
+              <div className="">
+               
+                {data.forecast.forecastday.map((day) => (
+                  
+                     <div key={data.day} className="bg-white w-[1000px] h-[380px]  ml-40 mt-4 rounded-xl  ">
+                       <h4 className="text-center text-2xl font-bold text-blue-700 pt-3">Daily Forecast</h4>
+                      <div className="flex gap-6 justify-center">
+                        <div className="text-xl pt-3 pl-40">
+                       <h3 className="font-bold ">{day.date}</h3>
+                        <p>Max {day.day.maxtemp_c}°C | Min {day.day.mintemp_c}°C</p>
+                        <p className=" font-semibold">({day.day.condition.text})</p>
+                        </div>
+                         <img src={day.day.condition.icon} alt="" className=" w-[130px] h-[130px]"/>
+                          </div>
+                           <h4 className="text-center text-2xl font-bold text-blue-700">Hourly Forecast</h4>
+                            <div className="overflow-x-auto whitespace-nowrap pb-3">
+                              {day.hour.map((h) => (
+                                 <div key={h.time_epoch} className="inline-block bg-blue-100 mt-5 ml-3 rounded w-[80px] h-[120px] text-center hover:scale-105">
+                                    <p className="font-bold pt-4" >{h.time.split(" ")[1]}</p>
+                                    <img src={h.condition.icon} alt="" className="w-[50px] ml-3"/>
+                                     <p>{h.temp_c}°C</p>
+                                 </div>
 
-          {/* Daily + Hourly Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5">
-            {data.forecast.forecastday.map((day) => (
-              <div key={day.date} className="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
-                <div className="text-center hover:scale-105 transform transition">
-                  <p className="font-semibold mb-1">{day.date}</p>
-                  <img src={day.day.condition.icon} alt="icon" className="w-16 h-16 mx-auto" />
-                  <p className="mt-1">{day.day.condition.text}</p>
-                  <p className="mt-2">Max: {day.day.maxtemp_c}°C</p>
-                  <p>Min: {day.day.mintemp_c}°C</p>
-                </div>
+                              ))}
+                            </div>
 
-                {/* hourly scroll */}
-                <div className="mt-4 overflow-x-auto whitespace-nowrap">
-                  {day.hour.map((hr) => (
-                    <div
-                      key={hr.time_epoch}
-                      className="inline-block bg-blue-100 dark:bg-gray-700 rounded-lg px-3 py-2 m-1 text-xs text-center"
-                    >
-                      <p className="font-medium">{hr.time.split(" ")[1]}</p>
-                      <img src={hr.condition.icon} className="w-6 h-6 mx-auto" alt="icon" />
-                      <p>{hr.temp_c}°C</p>
-                    </div>
-                  ))}
-                </div>
+                     </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+             
+              
+              </div>
+           )}
+           
+        </div>  
+        
   );
 }
+
