@@ -21,6 +21,7 @@ useEffect(() => {
 }, []);
 
 const [suggestions, setSuggestions] = useState([]);
+
 const apiKey = "79557696e6b6410aa5372925250508";
 const fetchSuggestions = async (query) => {
   if (!query) {
@@ -58,8 +59,13 @@ useEffect(() => {
       refetch();
     }
   }, [coords, refetch]);
-  
-
+  // .....suggestion......
+useEffect(() => {
+  if (city) {
+    refetch();
+  }
+}, [city, refetch]);
+    
   return (
     <div>
       <h1 className="text-white text-6xl font-extrabold text-center pt-4">
@@ -70,7 +76,7 @@ useEffect(() => {
                 <input value={city} onChange={(e) => {setCity(e.target.value);fetchSuggestions(e.target.value)}} type="text" placeholder="Search for location" className="w-sm lg:w-[300px] h-[45px] rounded border-gray-900 pl-2  ">
                 </input>
                 {suggestions.length > 0 && (
-      <ul className="absolute right-26 bg-white border border-gray-300 rounded w-[300px] mt-12 max-h-60 mr-20 overflow-y-auto">
+      <ul className="absolute right-26 bg-white border border-gray-300 rounded w-[300px] mt-12 max-h-60 lg:mr-20 ">
         {suggestions.map((location, index) => (
           <li
             key={index}
@@ -78,7 +84,7 @@ useEffect(() => {
             onClick={() => {
               setCity(location.name + ", " + location.country);
               setSuggestions([]); 
-              refetch();
+              // refetch();
             }}
           >
             {location.name}, {location.country}
@@ -108,6 +114,7 @@ useEffect(() => {
           
           <p className="text-xl pt-2">💧 Humidity: {data.current.humidity}%</p>
             <p className="text-xl">🌪 Wind: {data.current.wind_kph} km/h</p>
+            <p className="text-xl">🌧 Chance of Rain: {data.forecast.forecastday[0].day.daily_chance_of_rain}%</p>
             <p className="text-xl text-gray-800">
                            {new Date(data.location.localtime).toLocaleDateString("en-US", {
                            weekday: "long",
@@ -130,6 +137,7 @@ useEffect(() => {
                         <div className="text-xl text-center pt-3 lg:pl-60">
                        <h3 className="font-bold ">{day.date}</h3>
                         <p>Max {day.day.maxtemp_c}°C | Min {day.day.mintemp_c}°C</p>
+                        <p>🌧 Chance of Rain: {day.day.daily_chance_of_rain}%</p>
                         <p className=" font-semibold">({day.day.condition.text})</p>
                         </div>
                          <img src={day.day.condition.icon} alt="" className="ml-20 w-[130px] h-[130px] md:ml-72 lg:ml-20"/>
@@ -137,10 +145,11 @@ useEffect(() => {
                            <h4 className="text-center text-2xl font-bold text-blue-700">Hourly Forecast</h4>
                             <div className="overflow-x-auto whitespace-nowrap  pb-3 lg:pb-4">
                               {day.hour.map((h) => (
-                                 <div key={h.time_epoch} className="inline-block bg-blue-100 mt-5 ml-3 rounded w-[80px] h-[120px] text-center hover:scale-105">
+                                 <div key={h.time_epoch} className="inline-block bg-blue-100 mt-5 ml-3 rounded w-[80px] h-auto text-center hover:scale-105">
                                     <p className="font-bold pt-4" >{h.time.split(" ")[1]}</p>
                                     <img src={h.condition.icon} alt="" className="w-[50px] ml-3"/>
                                      <p>{h.temp_c}°C</p>
+                                      <p className="pb-3">🌧 {h.chance_of_rain}%</p>
                                  </div>
 
                               ))}

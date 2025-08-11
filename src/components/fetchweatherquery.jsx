@@ -8,6 +8,8 @@ const fetchWeather = async (city) => {
     const res = await axios.get(
       `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=7`
     );
+    
+    console.log(res.data);
     return res.data;
   };
 
